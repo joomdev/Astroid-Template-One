@@ -10,17 +10,11 @@
 
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Filter\OutputFilter;
-use Joomla\CMS\HTML\HTMLHelper;
-
 $attributes = array();
 
 if ($item->anchor_title) {
 	$attributes['title'] = $item->anchor_title;
 }
-
-$astroid_menu_options = $item->getParams()->get('astroid_menu_options', []);
-$astroid_menu_options = (array) $astroid_menu_options;
 
 if ($item->anchor_css) {
 	$attributes['class'] = $item->anchor_css;
@@ -30,36 +24,45 @@ if ($item->anchor_rel) {
 	$attributes['rel'] = $item->anchor_rel;
 }
 
+$astroid_menu_options = $item->getParams()->get('astroid_menu_options', []);
+$astroid_menu_options = (array) $astroid_menu_options;
+
 $linktype = $item->title;
 
 if ($item->menu_image) {
 	if ($item->menu_image_css) {
 		$image_attributes['class'] = $item->menu_image_css;
-		$linktype = HTMLHelper::_('image', $item->menu_image, $item->title, $image_attributes);
+		$linktype = JHtml::_('image', $item->menu_image, $item->title, $image_attributes);
 	} else {
-		$linktype = HTMLHelper::_('image', $item->menu_image, $item->title);
+		$linktype = JHtml::_('image', $item->menu_image, $item->title);
 	}
 
-	if ($itemParams->get('menu_text', 1)) {
+	if ($item->getParams()->get('menu_text', 1)) {
 		$linktype .= '<span class="image-title">' . $item->title . '</span>';
 	}
 }
 
 if ($item->browserNav == 1) {
 	$attributes['target'] = '_blank';
+	$attributes['rel'] = 'noopener noreferrer';
+
+	if ($item->anchor_rel == 'nofollow') {
+		$attributes['rel'] .= ' nofollow';
+	}
 } elseif ($item->browserNav == 2) {
-	$options = 'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes';
+	$options = 'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,' . $params->get('window_open');
 
 	$attributes['onclick'] = "window.open(this.href, 'targetWindow', '" . $options . "'); return false;";
 }
 
 // Show icon html start here
 if (isset($astroid_menu_options['icon']) && !empty($astroid_menu_options['icon'])) {
-	$iconHtml = '<i class="' . $astroid_menu_options['icon'] . '"></i>';
+	$iconHtml = '<i class="' . $astroid_menu_options['icon'] . '"></i> ';
 } else {
 	$iconHtml = "";
 }
 // Show icon html End here
+
 
 // Show icon badge here
 if (isset($astroid_menu_options['badge']) && !empty($astroid_menu_options['badge'])) {
@@ -69,17 +72,12 @@ if (isset($astroid_menu_options['badge']) && !empty($astroid_menu_options['badge
 }
 // Show icon badge End here
 
-// Show icon showtitle here
-if (isset($astroid_menu_options['showtitle']) && !empty($astroid_menu_options['showtitle'])) {
+// Show icon subtitle here
+if (isset($astroid_menu_options['subtitle']) && !empty($astroid_menu_options['subtitle'])) {
 	$subtitle = '<small class="nav-subtitle">' . $astroid_menu_options['subtitle'] . '</small>';
 } else {
 	$subtitle = "";
 }
-// Show icon showtitle End here
+// Show icon subtitle End here
 
-$attrs = [];
-foreach ($attributes as $prop => $value) {
-	$attrs[] = $prop . '="' . $value . '"';
-}
-
-echo '<a href="' . OutputFilter::ampReplace(htmlspecialchars($item->flink, ENT_COMPAT, 'UTF-8', false)) . '" ' . implode(' ', $attrs) . '> <span class="nav-title">' . $iconHtml . $item->title . $badgeHtml . '</span>' . $subtitle . '</a>';
+echo JHtml::_('link', JFilterOutput::ampReplace(htmlspecialchars($item->flink, ENT_COMPAT, 'UTF-8', false)), '<span class="nav-title">' . $iconHtml . $linktype . $badgeHtml . '</span>' . $subtitle, $attributes);
